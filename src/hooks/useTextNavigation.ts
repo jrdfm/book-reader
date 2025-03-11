@@ -101,44 +101,68 @@ export function useTextNavigation({
   }, [getCurrentWords, getCurrentSentences, paragraphs.length, position]);
 
   const moveToNextSentence = useCallback(() => {
-    const sentences = getCurrentSentences();
+    // Get current state
+    const currentParagraph = getCurrentParagraph();
+    const currentSentences = splitIntoSentences(currentParagraph);
     const currentSentenceIndex = position.sentenceIndex;
-
-    console.log('Navigation Debug:', {
+    
+    console.log('Current State:', {
+      paragraph: currentParagraph,
+      sentences: currentSentences,
       currentIndex: currentSentenceIndex,
-      totalSentences: sentences.length,
-      sentences: sentences,
-      currentSentence: sentences[currentSentenceIndex],
-      nextSentence: sentences[currentSentenceIndex + 1],
-      isLastSentence: currentSentenceIndex === sentences.length - 1
+      currentSentence: currentSentences[currentSentenceIndex]
     });
 
-    if (currentSentenceIndex < sentences.length - 1) {
-      setPosition((prev) => ({
-        ...prev,
+    // Calculate next position
+    let nextPosition: ReadingPosition;
+
+    // If we have a next sentence in current paragraph
+    if (currentSentenceIndex + 1 < currentSentences.length) {
+      nextPosition = {
+        paragraphIndex: position.paragraphIndex,
         sentenceIndex: currentSentenceIndex + 1,
-        wordIndex: 0,
-      }));
-    } else if (position.paragraphIndex < paragraphs.length - 1) {
-      // Check if next paragraph has sentences before moving
+        wordIndex: 0
+      };
+    }
+    // If we need to move to next paragraph
+    else if (position.paragraphIndex + 1 < paragraphs.length) {
       const nextParagraph = paragraphs[position.paragraphIndex + 1];
       const nextSentences = splitIntoSentences(nextParagraph);
       
-      console.log('Next Paragraph Debug:', {
-        nextParagraphSentences: nextSentences,
-        hasNextSentences: nextSentences.length > 0
-      });
-      
       if (nextSentences.length > 0) {
-        setPosition((prev) => ({
-          ...prev,
-          paragraphIndex: prev.paragraphIndex + 1,
+        nextPosition = {
+          paragraphIndex: position.paragraphIndex + 1,
           sentenceIndex: 0,
-          wordIndex: 0,
-        }));
+          wordIndex: 0
+        };
+      } else {
+        // Stay at current position if next paragraph has no sentences
+        nextPosition = { ...position };
       }
     }
-  }, [getCurrentSentences, paragraphs, position, splitIntoSentences]);
+    // At the end of the document
+    else {
+      nextPosition = { ...position };
+    }
+
+    console.log('Navigation:', {
+      from: {
+        paragraph: position.paragraphIndex,
+        sentence: position.sentenceIndex
+      },
+      to: {
+        paragraph: nextPosition.paragraphIndex,
+        sentence: nextPosition.sentenceIndex
+      },
+      currentSentence: currentSentences[currentSentenceIndex],
+      nextSentence: nextPosition.paragraphIndex === position.paragraphIndex 
+        ? currentSentences[nextPosition.sentenceIndex]
+        : splitIntoSentences(paragraphs[nextPosition.paragraphIndex])[0]
+    });
+
+    // Update position
+    setPosition(nextPosition);
+  }, [getCurrentParagraph, paragraphs, position, splitIntoSentences]);
 
   const moveToNextParagraph = useCallback(() => {
     const currentParagraphIndex = position.paragraphIndex;
@@ -183,17 +207,24 @@ export function useTextNavigation({
 
   const movePreviousSentence = useCallback(() => {
     const currentSentenceIndex = position.sentenceIndex;
+    const sentences = getCurrentSentences();
 
+    // If we're not at the first sentence of current paragraph
     if (currentSentenceIndex > 0) {
       setPosition((prev) => ({
         ...prev,
         sentenceIndex: currentSentenceIndex - 1,
         wordIndex: 0,
       }));
-    } else if (position.paragraphIndex > 0) {
+      return;
+    }
+    
+    // If we are at the first sentence, try to move to previous paragraph
+    if (position.paragraphIndex > 0) {
       const prevParagraph = paragraphs[position.paragraphIndex - 1];
       const prevSentences = splitIntoSentences(prevParagraph);
       
+      // Always move to previous paragraph if it exists and has sentences
       if (prevSentences.length > 0) {
         setPosition((prev) => ({
           ...prev,
@@ -203,7 +234,7 @@ export function useTextNavigation({
         }));
       }
     }
-  }, [paragraphs, position, splitIntoSentences]);
+  }, [getCurrentSentences, paragraphs, position, splitIntoSentences]);
 
   const movePreviousParagraph = useCallback(() => {
     const currentParagraphIndex = position.paragraphIndex;

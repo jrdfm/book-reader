@@ -52,23 +52,23 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose }) =>
         </div>
 
         {/* Font Size */}
-        <div>
-          <label className="block text-sm font-medium text-[#2B2B2B] mb-1">Font size:</label>
+        <div className="flex items-center gap-4">
+          <label className="w-32">Font Size:</label>
           <input
             type="range"
-            min="12"
-            max="32"
+            min="14"
+            max="28"
+            step="1"
             value={state.preferences.fontSize}
-            onChange={(e) => dispatch({
-              type: 'UPDATE_PREFERENCES',
-              payload: { fontSize: Number(e.target.value) }
-            })}
-            className="w-full"
+            onChange={(e) =>
+              dispatch({
+                type: 'UPDATE_PREFERENCES',
+                payload: { fontSize: Number(e.target.value) },
+              })
+            }
+            className="w-48"
           />
-          <div className="flex justify-between text-xs text-[#2B2B2B]">
-            <span>Aa</span>
-            <span>Aa</span>
-          </div>
+          <span>{state.preferences.fontSize}px</span>
         </div>
 
         {/* Alignment */}
@@ -110,7 +110,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose }) =>
         <div>
           <label className="block text-sm font-medium text-[#2B2B2B] mb-1">Line spacing:</label>
           <div className="flex gap-4">
-            {['1.2', '1.5', '1.8'].map((spacing) => (
+            {['1.5', '1.8', '2'].map((spacing) => (
               <label key={spacing} className="flex items-center">
                 <input
                   type="radio"
@@ -123,7 +123,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose }) =>
                   })}
                   className="mr-2"
                 />
-                {spacing === '1.2' ? 'Small' : spacing === '1.5' ? 'Medium' : 'Large'}
+                {spacing === '1.5' ? 'Small' : spacing === '1.8' ? 'Medium' : 'Large'}
               </label>
             ))}
           </div>
@@ -163,23 +163,23 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose }) =>
         </div>
 
         {/* Page Width */}
-        <div>
-          <label className="block text-sm font-medium text-[#2B2B2B] mb-1">Page width:</label>
+        <div className="flex items-center gap-4">
+          <label className="w-32">Page Width:</label>
           <input
             type="range"
-            min="50"
+            min="65"
             max="100"
+            step="5"
             value={state.preferences.pageWidth}
-            onChange={(e) => dispatch({
-              type: 'UPDATE_PREFERENCES',
-              payload: { pageWidth: Number(e.target.value) }
-            })}
-            className="w-full"
+            onChange={(e) =>
+              dispatch({
+                type: 'UPDATE_PREFERENCES',
+                payload: { pageWidth: Number(e.target.value) },
+              })
+            }
+            className="w-48"
           />
-          <div className="flex justify-between text-xs text-[#2B2B2B]">
-            <span>Narrow</span>
-            <span>Wide</span>
-          </div>
+          <span>{state.preferences.pageWidth}%</span>
         </div>
       </div>
     </div>

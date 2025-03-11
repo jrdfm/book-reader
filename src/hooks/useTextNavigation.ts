@@ -62,14 +62,16 @@ export function useTextNavigation({
 
   const moveToNextSentence = useCallback(() => {
     const sentences = getCurrentSentences();
+    const currentSentenceIndex = position.sentenceIndex;
 
-    if (position.sentenceIndex < sentences.length - 1) {
+    if (currentSentenceIndex < sentences.length - 1) {
       setPosition((prev) => ({
         ...prev,
-        sentenceIndex: prev.sentenceIndex + 1,
+        sentenceIndex: currentSentenceIndex + 1,
         wordIndex: 0,
       }));
     } else if (position.paragraphIndex < paragraphs.length - 1) {
+      // Move to first sentence of next paragraph
       setPosition((prev) => ({
         ...prev,
         paragraphIndex: prev.paragraphIndex + 1,
@@ -80,10 +82,12 @@ export function useTextNavigation({
   }, [getCurrentSentences, paragraphs.length, position]);
 
   const moveToNextParagraph = useCallback(() => {
-    if (position.paragraphIndex < paragraphs.length - 1) {
+    const currentParagraphIndex = position.paragraphIndex;
+
+    if (currentParagraphIndex < paragraphs.length - 1) {
       setPosition((prev) => ({
         ...prev,
-        paragraphIndex: prev.paragraphIndex + 1,
+        paragraphIndex: currentParagraphIndex + 1,
         sentenceIndex: 0,
         wordIndex: 0,
       }));
@@ -118,6 +122,41 @@ export function useTextNavigation({
     }
   }, [getCurrentSentences, paragraphs, position]);
 
+  const movePreviousSentence = useCallback(() => {
+    const currentSentenceIndex = position.sentenceIndex;
+
+    if (currentSentenceIndex > 0) {
+      setPosition((prev) => ({
+        ...prev,
+        sentenceIndex: currentSentenceIndex - 1,
+        wordIndex: 0,
+      }));
+    } else if (position.paragraphIndex > 0) {
+      // Move to last sentence of previous paragraph
+      const prevParagraph = paragraphs[position.paragraphIndex - 1];
+      const prevSentences = prevParagraph.split(/(?<=[.!?])\s+/);
+      setPosition((prev) => ({
+        ...prev,
+        paragraphIndex: prev.paragraphIndex - 1,
+        sentenceIndex: prevSentences.length - 1,
+        wordIndex: 0,
+      }));
+    }
+  }, [paragraphs, position]);
+
+  const movePreviousParagraph = useCallback(() => {
+    const currentParagraphIndex = position.paragraphIndex;
+
+    if (currentParagraphIndex > 0) {
+      setPosition((prev) => ({
+        ...prev,
+        paragraphIndex: currentParagraphIndex - 1,
+        sentenceIndex: 0,
+        wordIndex: 0,
+      }));
+    }
+  }, [position]);
+
   // Auto-scroll effect
   useEffect(() => {
     if (!isPlaying) return;
@@ -140,8 +179,10 @@ export function useTextNavigation({
   return {
     position,
     moveToNextWord,
-    moveToPreviousWord,
+    movePreviousWord: moveToPreviousWord,
     moveToNextSentence,
+    movePreviousSentence,
     moveToNextParagraph,
+    movePreviousParagraph,
   };
 } 

@@ -3,15 +3,15 @@ import type { BookReaderState, UserPreferences, BookContent, ReadingPosition } f
 
 const defaultPreferences: UserPreferences = {
   autoScrollSpeed: 200, // words per minute
-  fontSize: 16,
-  lineSpacing: '1.5',
+  fontSize: 18, // default size that's comfortable for reading
+  lineSpacing: '2', // large line spacing for better readability
   paragraphBackground: '#f0f0f0',
   sentenceHighlight: '#e6f3ff',
   wordHighlight: '#b3d9ff',
   fontFamily: 'system-ui',
   textAlign: 'justify',
-  theme: 'white',
-  pageWidth: 75 // percentage of screen width
+  theme: 'sepia', // default sepia theme
+  pageWidth: 100 // full width by default
 };
 
 const initialState: BookReaderState = {

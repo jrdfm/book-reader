@@ -27,9 +27,11 @@ const BookReader: React.FC<BookReaderProps> = ({ file }) => {
   const {
     position,
     moveToNextWord,
-    moveToPreviousWord,
+    movePreviousWord,
     moveToNextSentence,
+    movePreviousSentence,
     moveToNextParagraph,
+    movePreviousParagraph,
   } = useTextNavigation({
     text: state.content?.text || '',
     autoScrollSpeed: state.preferences.autoScrollSpeed,
@@ -72,15 +74,31 @@ const BookReader: React.FC<BookReaderProps> = ({ file }) => {
           event.preventDefault();
           moveToNextWord();
         }
-      } else if (event.key === 'ArrowLeft' && event.altKey) {
-        event.preventDefault();
-        moveToPreviousWord();
+      } else if (event.key === 'ArrowLeft') {
+        if (event.ctrlKey) {
+          event.preventDefault();
+          movePreviousParagraph();
+        } else if (event.shiftKey) {
+          event.preventDefault();
+          movePreviousSentence();
+        } else if (event.altKey) {
+          event.preventDefault();
+          movePreviousWord();
+        }
       } else if (event.key === 'Space') {
         event.preventDefault();
         dispatch({ type: 'TOGGLE_PLAY' });
       }
     },
-    [dispatch, moveToNextWord, moveToPreviousWord, moveToNextSentence, moveToNextParagraph]
+    [
+      dispatch,
+      moveToNextWord,
+      movePreviousWord,
+      moveToNextSentence,
+      movePreviousSentence,
+      moveToNextParagraph,
+      movePreviousParagraph
+    ]
   );
 
   if (!state.content) {
@@ -150,7 +168,16 @@ const BookReader: React.FC<BookReaderProps> = ({ file }) => {
         />
       )}
 
-      <TextDisplay text={state.content.text} currentPosition={position} />
+      <TextDisplay
+        text={state.content.text}
+        currentPosition={position}
+        moveToNextWord={moveToNextWord}
+        movePreviousWord={movePreviousWord}
+        moveToNextSentence={moveToNextSentence}
+        movePreviousSentence={movePreviousSentence}
+        moveToNextParagraph={moveToNextParagraph}
+        movePreviousParagraph={movePreviousParagraph}
+      />
 
       <div className="mt-4 flex justify-between items-center">
         <div className="flex items-center gap-2">

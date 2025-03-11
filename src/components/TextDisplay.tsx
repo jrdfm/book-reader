@@ -6,11 +6,26 @@ import type { ReadingPosition } from '../types';
 interface TextDisplayProps {
   text: string;
   currentPosition: ReadingPosition;
+  moveToNextWord: () => void;
+  movePreviousWord: () => void;
+  moveToNextSentence: () => void;
+  movePreviousSentence: () => void;
+  moveToNextParagraph: () => void;
+  movePreviousParagraph: () => void;
 }
 
 const PARAGRAPHS_PER_PAGE = 3;
 
-const TextDisplay: React.FC<TextDisplayProps> = ({ text, currentPosition }) => {
+const TextDisplay: React.FC<TextDisplayProps> = ({
+  text,
+  currentPosition,
+  moveToNextWord,
+  movePreviousWord,
+  moveToNextSentence,
+  movePreviousSentence,
+  moveToNextParagraph,
+  movePreviousParagraph
+}) => {
   const { state, dispatch } = useBookReader();
   const containerRef = useRef<HTMLDivElement>(null);
   const [showLeftNav, setShowLeftNav] = useState(false);
@@ -42,14 +57,33 @@ const TextDisplay: React.FC<TextDisplayProps> = ({ text, currentPosition }) => {
 
   // Handle keyboard navigation
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (event.key === 'ArrowRight' && !event.altKey && !event.ctrlKey && !event.shiftKey) {
+    if (event.key === 'ArrowRight') {
       event.preventDefault();
-      handlePageChange(currentPage + 1);
-    } else if (event.key === 'ArrowLeft' && !event.altKey) {
+      if (event.ctrlKey) {
+        moveToNextParagraph();
+      } else if (event.shiftKey) {
+        moveToNextSentence();
+      } else if (event.altKey) {
+        moveToNextWord();
+      } else {
+        handlePageChange(currentPage + 1);
+      }
+    } else if (event.key === 'ArrowLeft') {
       event.preventDefault();
-      handlePageChange(currentPage - 1);
+      if (event.ctrlKey) {
+        movePreviousParagraph();
+      } else if (event.shiftKey) {
+        movePreviousSentence();
+      } else if (event.altKey) {
+        movePreviousWord();
+      } else {
+        handlePageChange(currentPage - 1);
+      }
+    } else if (event.key === 'Space') {
+      event.preventDefault();
+      dispatch({ type: 'TOGGLE_PLAY' });
     }
-  }, [currentPage, totalPages]);
+  }, [currentPage, totalPages, dispatch, moveToNextWord, movePreviousWord, moveToNextSentence, movePreviousSentence, moveToNextParagraph, movePreviousParagraph]);
 
   // Add keyboard event listeners
   useEffect(() => {

@@ -10,11 +10,19 @@ export interface Page {
   paragraphs: string[];
 }
 
+export interface PageMetadata {
+  pageNumber: number;
+  startParagraphIndex: number;
+  endParagraphIndex: number;
+}
+
 export interface BookContent {
   text: string;
   title: string;
   author?: string;
   format: 'pdf' | 'epub' | 'text';
+  pages?: PageMetadata[];
+  originalParagraphStructure?: boolean;
 }
 
 export interface UserPreferences {

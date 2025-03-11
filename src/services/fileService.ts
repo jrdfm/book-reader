@@ -1,6 +1,6 @@
 import { pdfjs } from 'react-pdf';
 import JSZip from 'jszip';
-import type { BookContent } from '../types';
+import type { BookContent, PageMetadata } from '../types';
 
 // Initialize PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
@@ -23,21 +23,79 @@ export async function parseFile(file: File): Promise<BookContent> {
 async function parsePDF(file: File): Promise<BookContent> {
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-  let text = '';
+  const pages: PageMetadata[] = [];
+  const allParagraphs: string[] = [];
+  let combinedText = '';
 
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    const pageText = content.items
-      .map((item: any) => ('str' in item ? item.str : ''))
-      .join(' ');
-    text += pageText + '\n\n';
+    
+    // Group items by their y-coordinate to identify paragraphs
+    const lineMap = new Map<number, string[]>();
+    content.items.forEach((item: any) => {
+      if ('str' in item) {
+        const y = Math.round(item.transform[5]); // y-coordinate
+        if (!lineMap.has(y)) {
+          lineMap.set(y, []);
+        }
+        lineMap.get(y)?.push(item.str);
+      }
+    });
+
+    // Convert lines to paragraphs
+    const sortedYCoords = Array.from(lineMap.keys()).sort((a, b) => b - a);
+    const paragraphs: string[] = [];
+    let currentParagraph: string[] = [];
+
+    sortedYCoords.forEach((y, index) => {
+      const line = lineMap.get(y)?.join(' ') || '';
+      
+      // If line is very short or ends with sentence-ending punctuation,
+      // it might be the end of a paragraph
+      if (line.trim().length < 50 || /[.!?]$/.test(line.trim())) {
+        currentParagraph.push(line);
+        if (index === sortedYCoords.length - 1 || 
+            (lineMap.get(sortedYCoords[index + 1])?.join(' ').trim().length || 0) > 50) {
+          paragraphs.push(currentParagraph.join(' ').trim());
+          currentParagraph = [];
+        }
+      } else {
+        currentParagraph.push(line);
+      }
+    });
+
+    // Add any remaining paragraph
+    if (currentParagraph.length > 0) {
+      paragraphs.push(currentParagraph.join(' ').trim());
+    }
+
+    // Filter out empty paragraphs and page numbers
+    const filteredParagraphs = paragraphs
+      .filter(p => p.trim().length > 0)
+      .filter(p => !/^\d+$/.test(p.trim())); // Remove standalone page numbers
+
+    // Record page metadata
+    const startIndex = allParagraphs.length;
+    allParagraphs.push(...filteredParagraphs);
+    const endIndex = allParagraphs.length - 1;
+    
+    pages.push({
+      pageNumber: i,
+      startParagraphIndex: startIndex,
+      endParagraphIndex: endIndex
+    });
+
+    // Add page marker and paragraphs to combined text
+    combinedText += filteredParagraphs.join('\n\n') + '\n\n';
   }
 
   return {
-    text: text.trim(),
+    text: combinedText.trim(),
     title: file.name.replace('.pdf', ''),
     format: 'pdf',
+    pages,
+    originalParagraphStructure: true
   };
 }
 

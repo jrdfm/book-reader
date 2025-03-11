@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { useBookReader } from '../context/BookReaderContext';
 import { useTextNavigation } from '../hooks/useTextNavigation';
 import { useTTS } from '../hooks/useTTS';
@@ -9,6 +9,7 @@ import { FiSettings } from 'react-icons/fi';
 import type { ReadingPosition } from '../types';
 
 const KOKORO_API_ENDPOINT = 'http://localhost:8000'; // Update with your Kokoro-FastAPI endpoint
+const PARAGRAPHS_PER_PAGE = 2;
 
 interface BookReaderProps {
   file: File;
@@ -57,17 +58,22 @@ const BookReader: React.FC<BookReaderProps> = ({ file }) => {
     }
   };
 
+  // Handle keyboard shortcuts for word/sentence navigation and play/pause
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
       if (event.key === 'ArrowRight') {
         if (event.ctrlKey) {
+          event.preventDefault();
           moveToNextParagraph();
         } else if (event.shiftKey) {
+          event.preventDefault();
           moveToNextSentence();
-        } else {
+        } else if (event.altKey) {
+          event.preventDefault();
           moveToNextWord();
         }
-      } else if (event.key === 'ArrowLeft') {
+      } else if (event.key === 'ArrowLeft' && event.altKey) {
+        event.preventDefault();
         moveToPreviousWord();
       } else if (event.key === 'Space') {
         event.preventDefault();
